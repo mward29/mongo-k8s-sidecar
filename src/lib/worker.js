@@ -23,7 +23,7 @@ var init = function(done) {
 
     hostIp = addr;
     hostIpAndPort = hostIp + ':' + config.mongoPort;
-
+    console.log("Host IP and Port for mongo '%s'", hostIpAndPort)
     done();
   });
 };
@@ -164,7 +164,7 @@ var notInReplicaSet = function(db, pods, done) {
     }
   }
 
-  async.parallel(testRequests, function(err, results) {
+  async.race(testRequests, function(err, results) {
     if (err) {
       return done(err);
     }
