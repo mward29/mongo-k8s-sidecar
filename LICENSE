@@ -1,7 +1,10 @@
 The MIT License (MIT)
 
-Copyright (c) 2015 Charles Vallance
+Copyright (c) 2017 Pearson Technology
 
+Copyright for portions of project mongo-k8s-sidecar are held by
+[Charles Vallance, 2015] as part of project mongo-k8s-sidecar. All other
+copyright for project mongo-k8s-sidecar are held by [Pearson Technology, 2017].
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

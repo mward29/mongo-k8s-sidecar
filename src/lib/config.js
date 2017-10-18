@@ -31,7 +31,7 @@ var getk8sROServiceAddress = function() {
  */
 var getK8sClusterDomain = function() {
   var domain = process.env.KUBERNETES_CLUSTER_DOMAIN || "cluster.local";
-  verifyCorrectnessOfDomain(domain);
+  //verifyCorrectnessOfDomain(domain);
   return domain;
 };
 

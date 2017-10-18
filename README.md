@@ -1,4 +1,5 @@
-# Mongo Kubernetes Replica Set Sidecar
+# Mongo Kubernetes Replica Set Sidecar  [![dev](https://travis-ci.org/pearsontechnology/mongo-k8s-sidecar.svg?branch=dev)](https://travis-ci.org/pearsontechnology/mongo-k8s-sidecar/branches)
+
 
 This project is as a PoC to setup a mongo replica set using Kubernetes. It should handle resizing of any type and be
 resilient to the various conditions both mongo and kubernetes can find themselves in.
@@ -6,10 +7,10 @@ resilient to the various conditions both mongo and kubernetes can find themselve
 ## How to use it
 
 The docker image is hosted on docker hub and can be found here:
-https://hub.docker.com/r/cvallance/mongo-k8s-sidecar/
+https://hub.docker.com/r/pearsontechnology/mongo-sidecar/
 
 An example kubernetes replication controller can be found in the examples directory on github here:
-https://github.com/cvallance/mongo-k8s-sidecar
+https://github.com/pearsontechnology/mongo-k8s-sidecar
 
 There you will also find some helper scripts to test out creating the replica set and resizing it.
 
@@ -129,7 +130,7 @@ Volume & Volume Mount
             - name: mongo-ssl
               mountPath: /data/ssl
         - name: mongo-sidecar
-          image: cvallance/mongo-k8s-sidecar:latest
+          image: pearsontechnology/mongo-k8s-sidecar:latest
           env:
             - name: MONGO_SIDECAR_POD_LABELS
               value: "role=mongo,environment=prod"
@@ -160,12 +161,4 @@ or
 Generate them on your own and push the secrets `kube create secret generic mongo --from-file=./keys`
 where `keys` is a directory containing your SSL pem file named `mongodb.pem`
 
-## Debugging
 
-TODO: Instructions for cloning, mounting and watching
-
-## Still to do
-
-- Add tests!
-- Add to circleCi
-- Alter k8s call so that we don't have to filter in memory

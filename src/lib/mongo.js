@@ -1,7 +1,8 @@
 var Db = require('mongodb').Db;
-var MongoServer = require('mongodb').Server;
+var MongoClient = require('mongodb').MongoClient;
 var async = require('async');
 var config = require('./config');
+var assert = require('assert');
 
 var localhost = '127.0.0.1'; //Can access mongo as localhost from a sidecar
 
@@ -27,52 +28,40 @@ var getDb = function(host, done) {
     }
   }
 
-  var mongoDb = new Db(config.database, new MongoServer(host, config.mongoPort, mongoOptions));
+  var connectUrl = "mongodb://" + host + ":" + config.mongoPort + "/admin"
 
-  mongoDb.open(function (err, db) {
-    if (err) {
-      return done(err);
-    }
 
-    if(config.username) {
-        mongoDb.authenticate(config.username, config.password, function(err, result) {
-            if (err) {
-              return done(err);
-            }
+  MongoClient.connect(connectUrl, mongoOptions, function (err, db) {
+      assert.equal(null, err);
 
-            return done(null, db);
-        });
-    } else {
       return done(null, db);
-    }
-
   });
 };
 
 var replSetGetConfig = function(db, done) {
-  db.admin().command({ replSetGetConfig: 1 }, {}, function (err, results) {
-    if (err) {
-      return done(err);
-    }
+    db.command({ replSetGetConfig: 1 }, {}, function (err, results) {
+        if (err) {
+          return done(err);
+        }
 
-    return done(null, results.config);
-  });
+        return done(null, results.config);
+    });
 };
 
 var replSetGetStatus = function(db, done) {
-  db.admin().command({ replSetGetStatus: {} }, {}, function (err, results) {
-    if (err) {
-      return done(err);
-    }
 
-    return done(null, results);
-  });
+    db.command({ replSetGetStatus: {} }, {}, function (err, results) {
+        if (err) {
+          return done(err);
+        }
+        return done(null, results);
+    });
 };
 
 var initReplSet = function(db, hostIpAndPort, done) {
-  console.log('initReplSet', hostIpAndPort);
 
-  db.admin().command({ replSetInitiate: {} }, {}, function (err) {
+  console.log('initReplSet', hostIpAndPort);
+  db.command({ replSetInitiate: {} }, {}, function (err) {
     if (err) {
       return done(err);
     }
@@ -86,13 +75,14 @@ var initReplSet = function(db, hostIpAndPort, done) {
       console.log('initial rsConfig is', rsConfig);
       rsConfig.configsvr = config.isConfigRS;
       rsConfig.members[0].host = hostIpAndPort;
+      rsConfig.settings.getLastErrorDefaults = { w: "majority", wtimeout: 5000 }
+
       async.retry({times: 20, interval: 500}, function(callback) {
         replSetReconfig(db, rsConfig, false, callback);
       }, function(err, results) {
         if (err) {
           return done(err);
         }
-
         return done();
       });
     });
@@ -103,13 +93,12 @@ var replSetReconfig = function(db, rsConfig, force, done) {
   console.log('replSetReconfig', rsConfig);
 
   rsConfig.version++;
+  db.command({ replSetReconfig: rsConfig, force: force }, {}, function (err) {
+      if (err) {
+          return done(err);
+      }
 
-  db.admin().command({ replSetReconfig: rsConfig, force: force }, {}, function (err) {
-    if (err) {
-      return done(err);
-    }
-
-    return done();
+      return done();
   });
 };
 
@@ -145,7 +134,21 @@ var addNewMembers = function(rsConfig, addrsToAdd) {
       host: addrsToAdd[i]
     };
 
-    rsConfig.members.push(cfg);
+    var exists = false;
+
+    for (var j in rsConfig.members) {
+      var member = rsConfig.members[j];
+      if (member.host === addrsToAdd[i]) {
+        console.log("Host [%s] already exists in the Replicaset. Not adding...",addrsToAdd[i])
+        exists = true
+        break;
+      }
+    }
+
+    if (!exists){
+      rsConfig.members.push(cfg);
+    }
+
   }
 };
 
